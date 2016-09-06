@@ -35,27 +35,24 @@ external makeStyleProperties : ?backgroundColor: string ->
                                unit ->
                                < .. > Js.t = "" [@@bs.obj]
 
-let handleStyleProperty prop obj =
+let styleHandler prop obj =
   match prop with
   | BackgroundColor color -> obj##backgroundColor #= color;
-                             obj [@bs]
+                             obj
   | Color color -> obj##color #= color;
                    obj
 
-let handleStyleProperties props =
-  List.fold_right handleStyleProperty props (makeObj ())
+let handleProperties handler props =
+  List.fold_right handler props (makeObj ())
 
-let handleHtmlProperty prop obj =
+let htmlHandler prop obj =
   match prop with
-  | Style styles -> obj##style #= (handleStyleProperties styles);
+  | Style styles -> obj##style #= (handleProperties styleHandler styles);
                    obj
-
-let handleHtmlProperties props =
-  List.fold_right handleHtmlProperty props (makeObj ())
 
 let h_ a b c = h a (makeObj ()) b c;;
 
-let html tag props type' children = h tag (handleHtmlProperties props) children type';;
+let html tag props type' children = h tag (handleProperties htmlHandler props) children type';;
 
 let patch = init [| sdClass; sdStyle |];;
 
