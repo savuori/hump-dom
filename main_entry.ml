@@ -15,7 +15,7 @@ type styleProperty =
   | Color of string;;
 
 type htmlProperty =
-  | Style of styleProperty;;
+  | Style of (styleProperty list);;
 
 external sdClass : snabbDomModule = "snabbdom/modules/class" [@@bs.module];;
 external sdStyle : snabbDomModule = "snabbdom/modules/style" [@@bs.module];;
@@ -42,28 +42,25 @@ let handleStyleProperty prop obj =
   | Color color -> obj##color #= color;
                    obj
 
+let handleStyleProperties props =
+  List.fold_right handleStyleProperty props (makeObj ())
+
 let handleHtmlProperty prop obj =
   match prop with
-  | Style style -> obj##style #= (handleStyleProperty style (makeObj ()));
+  | Style styles -> obj##style #= (handleStyleProperties styles);
                    obj
 
-(* let handleHtmlProperties props =
-  List.fold_right (handleHtmlProperty props [%bs.obj {a = "5"}] *)
+let handleHtmlProperties props =
+  List.fold_right handleHtmlProperty props (makeObj ())
 
 let h_ a b c = h a (makeObj ()) b c;;
 
-let html tag props type' children = h tag (handleHtmlProperty props (makeObj ())) children type';;
+let html tag props type' children = h tag (handleHtmlProperties props) children type';;
 
 let patch = init [| sdClass; sdStyle |];;
 
-(*
 let vnode = h_ "div" [|
-    h "div" [%bs.obj {style = {backgroundColor = "red"}}] "Hello World!" Text
-  |] V
-  *)
-
-let vnode = h_ "div" [|
-    html "div" (Style (BackgroundColor "blue")) Text "Hello World!"
+    html "div" [Style [BackgroundColor "blue"; Color "red"]] Text "Hello World!"
   |] V
 
 let container = getElementById dom "container";;
