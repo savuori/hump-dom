@@ -11,7 +11,8 @@ type _ vNodeContent =
 
 
 type styleProperty =
-  | BackgroundColor of string;;
+  | BackgroundColor of string
+  | Color of string;;
 
 type htmlProperty =
   | Style of styleProperty;;
@@ -27,23 +28,31 @@ external init : snabbDomModule array -> (vNode -> vNode -> unit [@bs]) = "init" 
 external h : string -> < .. > Js.t -> 'a -> ('a vNodeContent [@bs.ignore]) -> vNode = "snabbdom/h" [@@bs.module]
 
 external makeHtmlProperties : ?style: < .. > Js.t -> ?on: < .. > Js.t -> unit -> < .. > Js.t = "" [@@bs.obj]
+external makeObj : unit -> < .. > Js.t = "" [@@bs.obj]
 
-external makeStyleProperties : ?backgroundColor: string -> unit -> < .. > Js.t = "" [@@bs.obj]
+external makeStyleProperties : ?backgroundColor: string ->
+                               ?color: string ->
+                               unit ->
+                               < .. > Js.t = "" [@@bs.obj]
 
-let handleStyleProperty prop =
+let handleStyleProperty prop obj =
   match prop with
-  | BackgroundColor color -> makeStyleProperties ~backgroundColor: color
+  | BackgroundColor color -> obj##backgroundColor #= color;
+                             obj [@bs]
+  | Color color -> obj##color #= color;
+                   obj
 
-let handleHtmlProperty prop =
+let handleHtmlProperty prop obj =
   match prop with
-  | Style style -> makeHtmlProperties ~style: ((handleStyleProperty style) ())
+  | Style style -> obj##style #= (handleStyleProperty style (makeObj ()));
+                   obj
 
 (* let handleHtmlProperties props =
   List.fold_right (handleHtmlProperty props [%bs.obj {a = "5"}] *)
 
-let h_ a b c = h a [%bs.obj {a = "5"}] b c;;
+let h_ a b c = h a (makeObj ()) b c;;
 
-let html tag props type' children = h tag ((handleHtmlProperty props) ()) children type';;
+let html tag props type' children = h tag (handleHtmlProperty props (makeObj ())) children type';;
 
 let patch = init [| sdClass; sdStyle |];;
 
