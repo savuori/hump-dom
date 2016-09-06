@@ -9,23 +9,29 @@ type _ vNodeContent =
   | Text : string vNodeContent
   | V: (vNode array) vNodeContent;;
 
+type action =
+ | Juttu
+ | TokaJuttu;;
 
 type styleProperty =
   | BackgroundColor of string
   | Color of string;;
 
-type htmlProperty =
-  | Style of (styleProperty list);;
+type 'a htmlProperty =
+  | Style of (styleProperty list)
+  | OnClick of 'a;;
+
 
 external sdClass : snabbDomModule = "snabbdom/modules/class" [@@bs.module];;
 external sdStyle : snabbDomModule = "snabbdom/modules/style" [@@bs.module];;
+external sdEventListeners : snabbDomModule = "snabbdom/modules/eventlisteners" [@@bs.module];;
 
 external dom : document = "document" [@@bs.val]
 external getElementById : document -> string -> vNode = "" [@@bs.send]
 
 external init : snabbDomModule array -> (vNode -> vNode -> unit [@bs]) = "init" [@@bs.module "snabbdom"]
 
-external h : string -> < .. > Js.t -> 'a -> ('a vNodeContent [@bs.ignore]) -> vNode = "snabbdom/h" [@@bs.module]
+external snabbh : string -> < .. > Js.t -> 'a -> ('a vNodeContent [@bs.ignore]) -> vNode = "snabbdom/h" [@@bs.module]
 
 external makeHtmlProperties : ?style: < .. > Js.t -> ?on: < .. > Js.t -> unit -> < .. > Js.t = "" [@@bs.obj]
 external makeObj : unit -> < .. > Js.t = "" [@@bs.obj]
@@ -43,22 +49,29 @@ let styleHandler prop obj =
                    obj
 
 let handleProperties handler props =
-  List.fold_right handler props (makeObj ())
+  List.fold_right handler props (makeObj ());;
+
+
+let queueAction action =
+  (Js.log (action));;
 
 let htmlHandler prop obj =
   match prop with
   | Style styles -> obj##style #= (handleProperties styleHandler styles);
-                   obj
+                    obj
+  | OnClick action -> obj##on #= [%bs.obj {click = fun _ -> queueAction action}];
+                      obj
 
-let h_ a b c = h a (makeObj ()) b c;;
+let h_ a b c = snabbh a (makeObj ()) c b;;
 
-let html tag props type' children = h tag (handleProperties htmlHandler props) children type';;
+let h tag props type' children = snabbh tag (handleProperties htmlHandler props) children type';;
 
-let patch = init [| sdClass; sdStyle |];;
+let patch = init [| sdClass; sdStyle; sdEventListeners |];;
 
-let vnode = h_ "div" [|
-    html "div" [Style [BackgroundColor "blue"; Color "red"]] Text "Hello World!"
-  |] V
+let vnode = h_ "div" V [|
+    h "div" [ Style [BackgroundColor "blue"; Color "red"]
+            ; OnClick Juttu ] Text "Hello World!"
+  |]
 
 let container = getElementById dom "container";;
 
