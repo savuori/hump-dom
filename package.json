@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "bs-platform": "1.0.0",
+    "bs-platform": "1.0.1",
     "snabbdom": "^0.5.1"
   },
   "scripts": {
