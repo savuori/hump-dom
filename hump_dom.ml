@@ -17,7 +17,7 @@ type styleProperty =
 
 type 'a htmlProperty =
   | Style of (styleProperty list)
-  | OnClick of 'a;;
+  | OnClick of ('a -> unit) * 'a;;
 
 external sdClass : snabbDomModule = "snabbdom/modules/class" [@@bs.module];;
 external sdStyle : snabbDomModule = "snabbdom/modules/style" [@@bs.module];;
@@ -35,8 +35,6 @@ external snabbh : string -> < .. > Js.t -> ('a vNodeContent [@bs.ignore]) -> 'a 
 
 external makeObj : unit -> < .. > Js.t = "" [@@bs.obj]
 
-let messages = ref [];;
-
 let styleHandler prop obj =
   match prop with
   | BackgroundColor color -> obj##backgroundColor #= color;
@@ -47,15 +45,13 @@ let styleHandler prop obj =
 let handleProperties handler props =
   List.fold_right handler props (makeObj ());;
 
-let queueAction action =
-  messages := action :: !messages;;
 
 let htmlHandler prop obj =
   match prop with
   | Style styles -> obj##style #= (handleProperties styleHandler styles);
                     obj
-  | OnClick action -> obj##on #= [%bs.obj {click = fun _ -> queueAction action}];
-                      obj
+  | OnClick (func, action) -> obj##on #= [%bs.obj {click = fun _ -> func action}];
+                              obj
 
 let h_ a b c = snabbh a (makeObj ()) b c;;
 
@@ -65,13 +61,16 @@ let patch = init [| sdClass; sdStyle; sdEventListeners |];;
 
 
 let startApp containerId viewFun updateFun startModel =
+  let messages = ref [] in
+  let queueAction action =
+     messages := action :: !messages; in
   let container = getElementById dom containerId in
-  let initVTree = patch container (viewFun startModel) [@bs] in
+  let initVTree = patch container (viewFun startModel queueAction) [@bs] in
   let rec messageLoop model tree =
     let (newModel, newTree) = match !messages with
                               | [] -> (model, tree)
                               | actionList -> let newM = List.fold_right updateFun actionList model in
-                                              let newT = patch tree (viewFun newM) [@bs] in
+                                              let newT = patch tree (viewFun newM queueAction) [@bs] in
                                                 messages := [];
                                                 (newM, newT)
     in
