@@ -14,14 +14,14 @@ let initModel = 0;;
 
 let view model send =
   h_ "div" V [| h "button"
-                  [ OnClick (send, Decrement) ]
+                  [ OnClick (send Decrement) ]
                   Text "Decrement"
 
               ; h_ "div"
                    Text (string_of_int model)
 
               ; h "button"
-                  [ OnClick (send, Increment) ]
+                  [ OnClick (send Increment) ]
                   Text "Increment"
   |]
 

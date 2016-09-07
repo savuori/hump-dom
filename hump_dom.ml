@@ -17,7 +17,7 @@ type styleProperty =
 
 type 'a htmlProperty =
   | Style of (styleProperty list)
-  | OnClick of ('a -> unit) * 'a;;
+  | OnClick of (unit -> unit);;
 
 external sdClass : snabbDomModule = "snabbdom/modules/class" [@@bs.module];;
 external sdStyle : snabbDomModule = "snabbdom/modules/style" [@@bs.module];;
@@ -50,7 +50,7 @@ let htmlHandler prop obj =
   match prop with
   | Style styles -> obj##style #= (handleProperties styleHandler styles);
                     obj
-  | OnClick (func, action) -> obj##on #= [%bs.obj {click = fun _ -> func action}];
+  | OnClick func -> obj##on #= [%bs.obj {click = fun _ -> func ()}];
                               obj
 
 let h_ a b c = snabbh a (makeObj ()) b c;;
@@ -62,7 +62,7 @@ let patch = init [| sdClass; sdStyle; sdEventListeners |];;
 
 let startApp containerId viewFun updateFun startModel =
   let messages = ref [] in
-  let queueAction action =
+  let queueAction action () =
      messages := action :: !messages; in
   let container = getElementById dom containerId in
   let initVTree = patch container (viewFun startModel queueAction) [@bs] in
