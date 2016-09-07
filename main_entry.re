@@ -19,7 +19,7 @@ external getElementById : document => string => vNode = "" [@@bs.send];
 
 external init : array snabbDomModule => (vNode => vNode => unit) [@bs] = "init" [@@bs.module "snabbdom"];
 
-external snabbHtml : string => Js.t <..> => 'a => (vNodeContent 'a) [@bs.ignore] => vNode = "snabbdom/h" [@@bs.module];
+external h : string => Js.t <..> => 'a => (vNodeContent 'a) [@bs.ignore] => vNode = "snabbdom/h" [@@bs.module];
 
 
 let h_ a b c => h a [%bs.obj {a: "5"}] b c;
