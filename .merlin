@@ -1,0 +1,6 @@
+# S is the merlin flag for source files
+S .
+S ./node_modules/**/src
+
+B node_modules/bs-platform/lib/ocaml
+FLG -ppx /Users/sampo/code/bucklescript/node_modules/bs-platform/bin/bsppx
