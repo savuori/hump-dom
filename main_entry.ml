@@ -88,16 +88,14 @@ let patcher model = patch container (view model) [@bs];;
 
 let initVTree = patch container (view initModel) [@bs];;
 
-let testi action model = patch container (view (update action model)) [@bs];;
-
 let rec messageLoop model tree =
   let (newModel, newTree) = match !messages with
-                            | [] -> Js.log "no messages"; (model, tree)
-                            | action :: t -> let newM = update action model in
-                                             let newT = patch tree (view newM) [@bs] in
-                                               messages := t;
-                                               (newM, newT)
+                            | [] -> (model, tree)
+                            | actionList -> let newM = List.fold_right update actionList model in
+                                            let newT = patch tree (view newM) [@bs] in
+                                              messages := [];
+                                              (newM, newT)
   in
-  setTimeout win (fun () -> messageLoop newModel newTree; [@bs]) 100.0; ();;
+  setTimeout win (fun () -> messageLoop newModel newTree; [@bs]) 25.0; ();;
 
 messageLoop initModel initVTree;;
